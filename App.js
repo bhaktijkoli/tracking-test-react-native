@@ -19,6 +19,7 @@ import {
 
 import {request, check, PERMISSIONS, RESULTS} from 'react-native-permissions';
 
+import client from './client';
 
 class App extends React.Component {
   async componentDidMount() {
@@ -36,6 +37,7 @@ class App extends React.Component {
       alert("App won't work without location permission");
       return;
     }
+    client.connect();
   }
   render() {
     return (
