@@ -1,13 +1,20 @@
 import TcpSocket from 'react-native-tcp-socket';
 import Geolocation from 'react-native-geolocation-service';
+import BackgroundTimer from 'react-native-background-timer';
 let host = '192.168.0.105';
 let port = 7070;
 let client = null;
+let uvid = '123456789012345';
 
 module.exports.connect = () => {
   client = TcpSocket.createConnection({host, port}, () => {
     console.log("Client connected");
-    module.exports.sendLocation();
+    module.exports.sendLocation('LGN');
+    BackgroundTimer.runBackgroundTimer(() => {
+      module.exports.sendLocation('NRM');
+    },
+    3000);
+
     client.on('data', function(data) {
       console.log('message was received', data);
     });
@@ -22,12 +29,19 @@ module.exports.connect = () => {
   });
 }
 
-module.exports.sendLocation = () => {
+module.exports.sendLocation = (type) => {
   Geolocation.getCurrentPosition(
     (position) => {
       if(client) {
         let { latitude, longitude } = position.coords;
-        client.write(`${latitude}, ${longitude}`)
+        let s = '';
+        if(type == 'LGN') {
+          s = formatLGN(uvid, latitude, longitude);
+        } else if(type == 'NRM') {
+          s = formatNRM(uvid, latitude, longitude);
+        }
+        console.log(s);
+        client.write(s)
       }
     },
     (error) => {
@@ -36,4 +50,35 @@ module.exports.sendLocation = () => {
     },
     { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
   );
+}
+
+let formatLGN = (uvid, latitude, longitude) => {
+  let s = "$LGN";
+  for(var i=1;i<20;i++) {
+    if(i == 2) {
+      s += ', '+uvid;
+    } else if(i == 4) {
+      s += ', '+ latitude;
+    } else if(i == 6) {
+      s += ', '+longitude;
+    } else {
+      s += ', ';
+    }
+  }
+  return s;
+}
+let formatNRM = (uvid, latitude, longitude) => {
+  let s = "$NRM";
+  for(var i=1;i<20;i++) {
+    if(i == 6) {
+      s += ', '+uvid;
+    } else if(i == 11) {
+      s += ', '+ latitude;
+    } else if(i == 13) {
+      s += ', '+longitude;
+    } else {
+      s += ', ';
+    }
+  }
+  return s;
 }
