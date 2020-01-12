@@ -1,10 +1,10 @@
 import TcpSocket from 'react-native-tcp-socket';
 import Geolocation from 'react-native-geolocation-service';
 import BackgroundTimer from 'react-native-background-timer';
+import AsyncStorage from '@react-native-community/async-storage';
 let host = '192.168.0.105';
-let port = 7070;
+let port = 8080;
 let client = null;
-let uvid = '123456789012345';
 
 module.exports.connect = () => {
   client = TcpSocket.createConnection({host, port}, () => {
@@ -31,10 +31,11 @@ module.exports.connect = () => {
 
 module.exports.sendLocation = (type) => {
   Geolocation.getCurrentPosition(
-    (position) => {
+    async (position) => {
       if(client) {
         let { latitude, longitude } = position.coords;
         let s = '';
+        let uvid = await AsyncStorage.getItem('@UVID');
         if(type == 'LGN') {
           s = formatLGN(uvid, latitude, longitude);
         } else if(type == 'NRM') {
